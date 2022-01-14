@@ -1,0 +1,1 @@
+{"PV": 200, "Boiler": {"Power": 300, "Eff": 0.85}, "Battery": {"Input_Power": 10, "Output_Power": 10, "Self_Discharge": 0.1, "Capacity": 200, "Eff_Inflow": 0.98, "Eff_Outflow": 0.98}, "CHP": {"ElectricPower": 30, "ThermalPower": 60, "ElectricEfficiency": 0.3, "ThermalEfficiency": 0.6}}
