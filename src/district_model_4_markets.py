@@ -101,7 +101,6 @@ def get_district_dataframe(year=2017):
                   len(pv_pu),
                   len(wind_pu))
 
-
     # Build Dataframe from a dictionary
     district_data = {
         "Date": dates[0:min_len],
@@ -109,8 +108,7 @@ def get_district_dataframe(year=2017):
         "Heat": heat[0:min_len],
         "PV_pu": pv_pu[0:min_len],
         "Wind_pu": wind_pu[0:min_len]}
-    
-    
+
     district_df = pd.DataFrame.from_dict(district_data)
     district_df.set_index("Date", inplace=True)
 
@@ -180,12 +178,11 @@ def create_energy_system(boundary_data, market_data, sizing=None):
 
         with open(JSON_DIR, 'w') as fp:
             json.dump(sizing, fp)
-    
+
     elif os.path.exists(sizing):
         with open(sizing) as json_file:
             sizing = json.load(json_file)
-        
-        
+
     # Create Energy System with the dataframe time series
     energy_system = EnergySystem(timeindex=boundary_data.index)
 
@@ -287,7 +284,7 @@ def create_energy_system(boundary_data, market_data, sizing=None):
 
     energy_system.add(t_boiler, s_pv, sto_battery, t_chp)
 
-    # Markets
+    # Markets. Prices are in EUR/kWh for consistency.
     s_day_ahead = Sink(
         label="s_da",
         inputs={
@@ -335,6 +332,16 @@ def build_model_and_constraints(energy_system):
     # Build model
     model = Model(energy_system)
 
+    # Before anything I need the shape of the future_peak in the shape of 1
+    # and 0
+
+    # electric bus
+    bus_el_out = [n for n in energy_system.nodes if n.label == "b_el_out"][0]
+    # check output
+    key = [k for k in bus_el_out.outputs.keys() if "s_fp" in str(k)][0]
+    future_base_flow_price = bus_el_out.outputs[key].variable_costs
+   
+    
     # Add Market Constraints
 
     # Constraint for the Day Ahead Market
@@ -349,12 +356,11 @@ def build_model_and_constraints(energy_system):
         for t in model.TIMESTEPS:
             if t % 4 != 0:
                 # ToDo: Change name to day_ahead
-                limit_name = "intraday_markets_{}={}".format(t, t - t % 4)
+                limit_name = "day_ahead_{}={}".format(t, t - t % 4)
                 setattr(model, limit_name, po.Constraint(
                     rule=(model.flow[i, o, t] - model.flow[i, o, t - t % 4] == 0)))
 
     # Constraint for the Future Peak
-    # ToDo: Exchange peak and base naming
     flows = {}
 
     for (i, o) in model.flows:
@@ -370,6 +376,7 @@ def build_model_and_constraints(energy_system):
 
     # Constraint for the Future Base
     # what are the time steps for decision making?
+    # Array starts at 0
     # 8*4+1 == 33 -> 32 is the time step for 8:00 AM
 
     flows = {}
@@ -377,27 +384,21 @@ def build_model_and_constraints(energy_system):
         if str(i) == "b_el_out" and str(o) == "s_fp":
             flows[(i, o)] = model.flows[i, o]
 
-    times_future_base = [32 + 96 * d for d in range(DAYS)]
     times_future_base_constraint = [
-        [time_step + j for j in range(0, 4 * 13)] for time_step in times_future_base]
-
-    tfb = []
-    for l in times_future_base_constraint:
-        for e in l:
-            tfb.append(e)
-
-    for time_step in tfb[1:]:  # for each day
+        t for t in model.TIMESTEPS if abs(future_base_flow_price[t]) > 0.001]  # a small tolerance there
+    
+    for time_step in times_future_base_constraint[1:]:  # for each day
         # range = 12*4 #time steps for the constraint, 13 hrs after 8 am, until
         # 20:45
         # the last bit of the 13h is not included
-        t0 = tfb[0]
+        t0 = times_future_base_constraint[0]
         for (i, o) in flows:
             limit_name = "future_peak_{}={}".format(time_step, t0)
             setattr(model, limit_name, po.Constraint(
                 rule=(model.flow[i, o, t0] - model.flow[i, o, time_step] == 0)))
 
     times_fb_null = [
-        t for t in model.TIMESTEPS if t not in tfb]
+        t for t in model.TIMESTEPS if t not in times_future_base_constraint]
     for t in times_fb_null:
         limit_name = "future_peak_null_{}".format(t)
         setattr(
@@ -464,7 +465,7 @@ def post_process_results(energy_system):
 def save_results(results, year, scenario):
     '''
     Save the results in cleaner dataframes and in a graphic
-    
+
     :param results: Results dataframe
     :param year: Year of the analysis
     :param scenario: Scenario number
@@ -474,7 +475,12 @@ def save_results(results, year, scenario):
     # Get the results of selling energy
     res_sell = [c for c in columns if "b_el_out" in c.split(",")[0]]
     styles = ['b', 'r:', 'y-.', 'g-.']
-    results[res_sell].plot(figsize=(16, 12), style=styles)
+    
+    # Create a plot 
+    results[res_sell].plot(figsize=(16, 12),
+                           style=styles,
+                           title = str(scenario.name)
+                           )
 
     results.to_csv(
         join(RESULTS_DATA_DIR, "MarketResults{}-Sc{}.csv".format(year, scenario.value)))
@@ -486,8 +492,8 @@ def save_results(results, year, scenario):
 
 def create_and_solve_scenario(days=7, year=2017, sizing=None, scenario=1):
     '''
-    Chain of functions to model the different scenarios 
-    
+    Chain of functions to model the different scenarios
+
     :param days: Number of days
     :param year: Year of simulation
     :param sizing: Sizing data. Can be empty and default data will be passed
@@ -503,10 +509,10 @@ def create_and_solve_scenario(days=7, year=2017, sizing=None, scenario=1):
     save_results(results, year, scenario)
 
 
-def main(year=2019,days=28):
+def main(year=2019, days=28):
     for scenario in Scenarios:
-        create_and_solve_scenario(days=days,year=year, scenario=scenario)
+        create_and_solve_scenario(days=days, year=year, scenario=scenario)
 
 
 if __name__ == '__main__':
-    main(year=2019,days=28)
+    main(year=2019, days=28)
