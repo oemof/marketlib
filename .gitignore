@@ -4,6 +4,9 @@ tmp/
 *.tmp
 *.bak
 *.swp
+*.csv
+*.jpg
+*.jpeg
 *.oemof
 *.pkl
 *~.nib

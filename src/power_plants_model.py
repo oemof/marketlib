@@ -71,12 +71,15 @@ def create_energy_system(scenario, district_df, market_data):
                        "pv": 0,
                        "wind": 0}
 
+    # Max energy values for Renewables based on Installed capacity of 1MW and
+    # real production as a fraction of 1MW
     meta_data["max_energy"] = {
-        "coal": 1,
-        "gas": 1,
-        "biogas": 1,
-        "wind": district_df["Wind_pu"].values,
-        "pv": district_df["PV_pu"].values}
+        "coal": 1,  # MW
+        "gas": 1,  # MW
+        "biogas": 1,  # MW
+        "wind": district_df["Wind_pu"].values,  # MW
+        "pv": district_df["PV_pu"].values,  # MW
+    }
 
     energy_system = EnergySystem(timeindex=district_df.index)
 
@@ -119,22 +122,23 @@ def create_energy_system(scenario, district_df, market_data):
     return energy_system
 
 
-def calculate_kpis(res, market_data):
+def calculate_kpis(results, market_data):
     '''
     Calculate a set of KPIs and return them as dataframe
-    :param res: Results dataframe
+
+    :param results: Results dataframe
     :param market_data: Market dataframe
     '''
 
-    total_energy = res.sum() / 4  # Since it it was in 15min intervals
+    total_energy = results.sum() / 4  # Since it it was in 15min intervals
     income = {
-        "income, da": res["b_el_out, s_da"].values *
+        "income, da": results["b_el_out, s_da"].values *
         market_data["day_ahead"].values,
-        "income, id": res["b_el_out, s_id"].values *
+        "income, id": results["b_el_out, s_id"].values *
         market_data["intra_day"].values,
-        "income, fb": res["b_el_out, s_fb"].values *
+        "income, fb": results["b_el_out, s_fb"].values *
         market_data["future_base"].values,
-        "income, fp": res["b_el_out, s_fp"].values *
+        "income, fp": results["b_el_out, s_fp"].values *
         market_data["future_peak"].values}
 
     income["income, total"] = income["income, da"] + \
@@ -151,14 +155,14 @@ def calculate_kpis(res, market_data):
 
 def model_power_plant_scenario(scenario, district_df, market_data, days=365):
     '''
-    Model an scenario and calculate kpis based on the given boundary data 
-    
+    Model an scenario and calculate kpis based on the given boundary data
+
     :param scenario: Scenario from PowerPlants
     :param district_df: Dataframe with information of the District
     :param market_data: Market Data with electricity price information
     :param days: Number of days to model, starting on 01/01
     '''
-    
+
     es = create_energy_system(scenario, district_df, market_data)
     model = build_model_and_constraints(es)
     solved_model = solve_model(model)
@@ -189,11 +193,11 @@ def solve_and_write_data(year=2020, days=365):
 
         results_dict[scenario] = results
 
+        # Labels for spreadsheets
         ts_name = scenario.name + '-TimeSeries'
         kpi_name = scenario.name + '-KPIs'
 
         # Open Excel Writer
-
         workbook = writer.book
         worksheet = workbook.add_worksheet(ts_name)
         writer.sheets[ts_name] = worksheet
@@ -219,18 +223,23 @@ def create_graphs(results_dict):
         results = results_dict[scenario]
         c = [c for c in results.columns if "b_el_out" in c.split(",")[0]]
         styles = ['b', 'r:', 'y-.', 'g-.']
-        results[c].plot(figsize=(16, 12), style=styles)
+
+        # Create Plots
+        results[c].plot(
+            figsize=(16, 12),
+            style=styles,
+            title=str(scenario.name) + " Power Plant")
         plt.savefig(join(RESULTS_VIS_DIR, f"PowerPlant-{scenario.name}.jpg"))
-        logging.info(f"Plot saved  year and Scenario {scenario.name}")
+        logging.info(f"Plot saved for Scenario {scenario.name}")
 
 
-def main(year = 2020, days=365):
+def main(year=2020, days=365):
     '''
     Chain functions to solve, write, and plot data from the scenario results
 
     :param days: Number of days to plot, starting on 01/01
     '''
-    results_dict = solve_and_write_data(year =year, days=days)
+    results_dict = solve_and_write_data(year=year, days=days)
     create_graphs(results_dict)
 
 
