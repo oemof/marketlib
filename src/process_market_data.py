@@ -29,7 +29,8 @@ def process_market_data(overwrite = True):
     '''
     market_filename = os.path.join(PROC_DATA_DIR, "market_data.csv")
     
-    if overwrite and isfile(market_filename):
+    if not overwrite and isfile(market_filename):
+        logging.info("Data exists and overwrite = False")
         return None
         # raise FileExistsError("Market data file exists. Delete file before continuing")
     
@@ -41,11 +42,11 @@ def process_market_data(overwrite = True):
     # First the day ahead
     # Create a date time index between the start and the end
     # This is the easy way since data has daylight saving times which
-    # are giving issues with the dadta reading
+    # are giving issues with the data reading
     start = "2014-01-01"
     periods= 62112
     freq = 60
-    dti_da = pd.date_range(start, periods=periods, freq="{}min".format(freq), tz="Europe/Berlin")
+    dti_da = pd.date_range(start, periods=periods, freq="{}min".format(freq))
     da_data=pd.read_csv(day_ahead, names=["date","day_ahead"], sep=";")
     da_dict={"Date": dti_da, "day_ahead":da_data["day_ahead"]}
     df_da= pd.DataFrame.from_dict(da_dict)
@@ -56,7 +57,7 @@ def process_market_data(overwrite = True):
     start = "2015-01-01"
     periods= 210528
     freq = 15
-    dti_id = pd.date_range(start, periods=periods, freq="{}min".format(freq), tz="Europe/Berlin")
+    dti_id = pd.date_range(start, periods=periods, freq="{}min".format(freq))
     id_data=pd.read_csv(intra_day, names=["date","intra_day"], sep=";")
     id_dict={"Date": dti_id, "intra_day":id_data["intra_day"]}
     df_id= pd.DataFrame.from_dict(id_dict)
@@ -85,7 +86,7 @@ def read_market_data(start="2016-05-15", periods= 100, freq=15):
         
     periods *=freq/15
   
-    dti = pd.date_range(start, periods=periods, freq="{}min".format(freq), tz="Europe/Berlin")
+    dti = pd.date_range(start, periods=periods, freq="{}min".format(freq))
     start= dti[0] 
     end = dti[-1]
   
@@ -150,7 +151,7 @@ def get_market_data(year=2016, overwrite=False):
 
         return df
 
-def solve_and_write_data():
+def read_and_write_data():
     '''
     Generates market data for years 2016 to 2020 and saves into plks
     '''
@@ -159,4 +160,6 @@ def solve_and_write_data():
         get_market_data(year, overwrite=True)
 
 if __name__ == '__main__':
-    solve_and_write_data()
+    process_market_data(overwrite=True)
+    read_and_write_data()
+    
