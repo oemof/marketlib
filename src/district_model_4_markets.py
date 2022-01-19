@@ -17,7 +17,7 @@ from oemof.solph import (EnergySystem, Bus, Sink, Source, Flow,
                          Transformer, Model)
 from oemof.solph.components import GenericStorage
 from src.process_market_data import get_market_data
-from oemof.solph import views, processing
+from oemof.outputlib import views, processing
 import matplotlib.pyplot as plt
 import logging
 import pyomo.environ as po
