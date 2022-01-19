@@ -14,7 +14,8 @@ import pandas as pd
 from src.common import RAW_DATA_DIR, RESULTS_DIR, RESULTS_DATA_DIR,\
     RESULTS_VIS_DIR
 from oemof.solph import (EnergySystem, Bus, Sink, Source, Flow,
-                         Transformer, GenericStorage, Model)
+                         Transformer, Model)
+from oemof.solph.components import GenericStorage
 from src.process_market_data import get_market_data
 from oemof.solph import views, processing
 import matplotlib.pyplot as plt
