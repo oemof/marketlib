@@ -83,6 +83,11 @@ def read_market_data(start="2016-05-15", periods= 100, freq=15):
         raise ValueError("Frequency must be 15, 30, or 60 min")
     
     market_filename = os.path.join(PROC_DATA_DIR, "market_data.csv")
+    
+    if not isfile(market_filename):
+        logging.info("CSV with market file not found. Creating file with market data")
+        process_market_data(overwrite=True)
+       
         
     periods *=freq/15
   
@@ -131,6 +136,7 @@ def get_market_data(year=2016, overwrite=False):
     """
     Writes a pickle with the dataframe for the year
     """
+        
     filename= os.path.join(PROC_DATA_DIR,"ElectrictyMarket{}.pkl".format(year))
     if isfile(filename) and overwrite==False:
         logging.info("Market data for the year {} loaded from {}".format(year, filename))
