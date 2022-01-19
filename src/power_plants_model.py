@@ -244,4 +244,4 @@ def main(year=2020, days=365):
 
 
 if __name__ == '__main__':
-    main(year=2020, days=28)
+    main(year=2020, days=14)

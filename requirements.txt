@@ -1,5 +1,5 @@
-matplotlib==3.4.2
-oemof==0.3.2
-oemof.tools==0.4.1
-pandas==1.2.4
-Pyomo==5.7.1
+matplotlib
+oemof.solph
+pandas
+openpyxl
+xlsxwriter
