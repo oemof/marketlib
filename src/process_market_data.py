@@ -22,7 +22,7 @@ logging.basicConfig(level=logging.INFO)
 
 def process_market_data(overwrite = True):
     '''
-    Procceses  the raw data files into ordered csvs with the data
+    Processes  the raw data files into ordered csvs with the data
     of Day Ahead and Intra Day prices for future evaluation.
     Needs to be run only once since the data is to be further read
     and processed by other methods.
@@ -66,6 +66,7 @@ def process_market_data(overwrite = True):
     
     # Join the DFs
     df_concat = pd.concat([df_da, df_id], axis=1)
+    # there is no csv created
     df_concat.to_csv(market_filename)
     logging.info("Market data processed and saved in {}".format(market_filename))
     
