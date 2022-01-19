@@ -69,21 +69,21 @@ def get_district_dataframe(year=2017):
     dates = pd.date_range(start, periods=days * 24 + 1, freq="H")
 
     # Electricity
-    electricity = pd.read_excel(EXCEL_DATA, "electricity demand series")[
+    electricity = pd.read_excel(EXCEL_DATA, "electricity demand series", engine='openpyxl')[
         "DE01"][2:].tolist()
 
     # Heat
-    heat = pd.read_excel(EXCEL_DATA, "heat demand series")[
+    heat = pd.read_excel(EXCEL_DATA, "heat demand series", engine='openpyxl')[
         "DE01"][2:].tolist()
 
     # PV Production per kW installed (as data source, no direct PV Modeling)
-    pv_df = pd.read_excel(EXCEL_DATA, "volatile series")
+    pv_df = pd.read_excel(EXCEL_DATA, "volatile series", engine='openpyxl')
 
     # Data is on the 4th column
     pv_pu = pv_df[pv_df.columns[3]][2:].tolist()
 
     # Wind Production per kW installed (as data source, no direct WK Modeling)
-    wind_df = pd.read_excel(EXCEL_DATA, "volatile series")
+    wind_df = pd.read_excel(EXCEL_DATA, "volatile series", engine='openpyxl')
 
     # Data is on the 5th column
     wind_pu = wind_df[wind_df.columns[4]][2:].tolist()
