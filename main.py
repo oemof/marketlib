@@ -22,7 +22,7 @@ from src.power_plants_model import main as power_plants_model
 
 if __name__ == '__main__':
     
-    district_model(year=2020, days = 365)
-    power_plants_model(year = 2020, days=365)
+    district_model(year=2020, days = 28)
+    power_plants_model(year = 2020, days=28)
     
     pass
