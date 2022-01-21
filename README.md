@@ -22,9 +22,11 @@ Project to create price pattern for energy markets based on historical prices.
 The function market_price_generator creates market price time series for historical and future years.
 For historical time series the year is necessary parameter.
 For future years there are necessary and optional parameter:
-###Necessary
+
+**Necessary**
 * year
-###Optional
+
+**Optional**
 * Average market price
 * Average volatility (year)
 * Volatility pattern
@@ -39,8 +41,13 @@ The price pattern dimensions are:
 
 This is due to the findings of the mentioned paper:
 1. Price pattern barely depend on the years:
+
 ![Figure 4](https://user-images.githubusercontent.com/25903724/150540178-f7e3ebc9-5886-4c93-b86d-bbda13020f1a.png)
+
 2. Price pattern depend very much on the days:
+
 ![Figure 5](https://user-images.githubusercontent.com/25903724/150540240-44f64eb8-9c68-4db4-aeee-a56670c2af31.png)
+
 3. Seasonality can be mapped well via the months parameter (in comparision to dynamic functions and seasons)
+
 ![Seasonality](https://user-images.githubusercontent.com/25903724/150540842-64b364e8-be71-4cf9-8687-09c7516c5f34.PNG)
