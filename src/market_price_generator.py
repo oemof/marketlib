@@ -48,6 +48,36 @@ def create_da_price_pattern(year, market, mean_val=None):
 
     start = datetime.date(year, 1, 1)
 
+    new_column_name = f"{market}_price"
+    CSV_FILENAME = join(PROC_DATA_DIR,
+                        "generated_{}_price_{}.csv".format(market, year))
+
+    if year in range(2015, 2022):
+        # Read the historical data if between these years
+        if market == "da":
+            day_ahead = join(RAW_DATA_DIR, "day_ahead_index_prices.csv")
+
+        elif market == "id":
+            day_ahead = join(RAW_DATA_DIR, "intraday_index_prices.csv")
+
+        data = pd.read_csv(
+            day_ahead,
+            names=["date", "day_ahead"],
+            sep=";",
+            parse_dates=[0])
+        data.set_index("date", inplace=True)
+        data.rename(
+            columns={
+                "date": "Date",
+                "day_ahead": new_column_name},
+            inplace=True)
+        data = data[f"{year}-01-01":f"{year}-12-31"]
+        
+        logging.info("{} Price pattern for the year {} saved to {}".format(
+            market.upper(), year, CSV_FILENAME))
+        return data
+
+    # Proceed with other years
     if is_leap_year(year):
         days = 364
     else:
@@ -155,8 +185,6 @@ def create_da_price_pattern(year, market, mean_val=None):
     res.rename(columns={"price": new_column_name}, inplace=True)
     res.set_index("Date", inplace=True)
 
-    CSV_FILENAME = join(PROC_DATA_DIR,
-                        "generated_{}_price_{}.csv".format(market, year))
     res.to_csv(CSV_FILENAME)
     logging.info(
         "{} Price pattern for the year {} saved to {}".format(
@@ -178,9 +206,13 @@ def is_leap_year(year):
 if __name__ == '__main__':
     create_da_price_pattern(2018, market="da")
     create_da_price_pattern(2018, market="id")
-    create_da_price_pattern(2019, market="da", mean_val=60)
-    create_da_price_pattern(2019, market="id", mean_val=50)
-    create_da_price_pattern(2022, market="da", mean_val=75)
-    create_da_price_pattern(2022, market="id", mean_val=75)
-    create_da_price_pattern(2025, market="id")
-    create_da_price_pattern(2025, market="da")
+    #=========================================================================
+    # create_da_price_pattern(2019, market="da", mean_val=60)
+    # create_da_price_pattern(2019, market="id", mean_val=50)
+    # create_da_price_pattern(2022, market="da", mean_val=75)
+    # create_da_price_pattern(2022, market="id", mean_val=75)
+    #
+    # # These should throw exceptions
+    # create_da_price_pattern(2025, market="id")
+    # create_da_price_pattern(2025, market="da")
+    #=========================================================================
