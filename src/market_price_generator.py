@@ -51,20 +51,21 @@ def create_price_pattern(year, market, mean_val=None):
 
     # Proceed with other years
     if is_leap_year(year):
-        days = 364
-    else:
         days = 365
+    else:
+        days = 366
 
     if market == "da":
-        periods = days * 24
+        periods = (days+1) * 24
         dti = pd.date_range(start, periods=periods, freq="H")
 
     if market == "id":
-        periods = days * 24 * 4
+        periods = (days+1) * 24 * 4
         dti = pd.date_range(start, periods=periods, freq="15T")
 
     df = pd.DataFrame()
-
+    print(dti[0])
+    print(dti[-1])
     # Need some parameters of the Datetime object to search patterns
     df["Date"] = dti
     df["Month"] = dti.month
@@ -150,7 +151,7 @@ def create_markets_info(year, mean_da=None, mean_id=None, fb=None, fp=None):
     markets
     
     For years 2015-2017: Uses artificial DA and ID profiles, and FB and FP market data
-    For years 2018-2021: Uses market data for DA, ID, FB, and FP
+    For years 2018-2021: Uses artificial data for DA, ID profiles, and FB and FP market data
     For years 2021-2025:  Uses artificial DA and ID profiles, and FB and FP market data
     For years 2025-:  Uses artificial data for DA, ID, FB, and FP
 
@@ -164,11 +165,11 @@ def create_markets_info(year, mean_da=None, mean_id=None, fb=None, fp=None):
     if year < 2015:
         raise ValueError("Year has to be greater than 2015")
 
-    if year >= 2022 and mean_da is None:
+    if year >= 2021 and mean_da is None:
         raise ValueError(
             'Mean Day ahead price "mean_da=" must be given for year>2021')
 
-    if year >= 2022 and mean_id is None:
+    if year >= 2021 and mean_id is None:
         raise ValueError(
             'Mean Intraday price "mean_id=" must be given for year>2021')
 
@@ -181,28 +182,27 @@ def create_markets_info(year, mean_da=None, mean_id=None, fb=None, fp=None):
             'Future Peak price "fp=" must be given for years not in 2018-2025')
 
     # Get DA and ID info
-    if year <= 2021:
-        market_filename = join(PROC_DATA_DIR, "market_data.csv")
-
-        if not isfile(market_filename):
-            logging.info(
-                "CSV with market file not found. Creating file with market data")
-            process_market_data(overwrite=True)
-
-        df = pd.read_csv(market_filename, parse_dates=True, index_col="Date")
-        markets_data = df.loc[f"{year}-01-01":f"{year}-12-31"]
-
-    if year >= 2022:
-        day_ahead = create_price_pattern(
-            year=year, market="da", mean_val=mean_da)
-        day_ahead = day_ahead.resample("15min").pad()
-        intra_day = create_price_pattern(
-            year=year, market="id", mean_val=mean_id)
-        markets_data = pd.concat([day_ahead, intra_day], axis=1)
-        
-        # Need to copy the last 3 values to fill the table for Day Ahead
-        for i in range(1, 4):
-            markets_data["da_price"][-i] = markets_data["da_price"][-4]
+    
+    if year in range(2015,2021):
+        DA_ID_MARKET_PARAMETER= join(RAW_DATA_DIR,"market_parameter.xlsx")
+        da_id_data = pd.read_excel(DA_ID_MARKET_PARAMETER, "MarketParams",
+                                   index_col="year",
+                                   engine='openpyxl'
+                                   )
+        mean_da=da_id_data.at[year,"dayahead"]
+        mean_id= da_id_data.at[year,"intraday"]
+    
+  
+    day_ahead = create_price_pattern(
+        year=year, market="da", mean_val=mean_da)
+    day_ahead = day_ahead.resample("15min").pad()
+    intra_day = create_price_pattern(
+        year=year, market="id", mean_val=mean_id)
+    markets_data = pd.concat([day_ahead, intra_day], axis=1)
+    
+    # Need to copy the last 3 values to fill the table for Day Ahead
+    for i in range(1, 4):
+        markets_data["da_price"][-i] = markets_data["da_price"][-4]
 
     if year in range(2018, 2025):
         future_base = pd.read_csv(
@@ -238,8 +238,9 @@ def create_markets_info(year, mean_da=None, mean_id=None, fb=None, fp=None):
             future_peak_vals[i] = 0
 
     markets_data["future_peak"] = future_peak_vals
-
-    # markets_data.to_csv(join(PROC_DATA_DIR, "test_{}.csv".format(year)))
+    
+    # Write the dataframe to a csv
+    markets_data.to_csv(join(PROC_DATA_DIR, "test_{}.csv".format(year)))
     logging.info(f"Electricity market prices (DA,ID,FB,FP) for {year} created")
     return markets_data
 
@@ -255,6 +256,7 @@ def is_leap_year(year):
 
 
 if __name__ == '__main__':
+    create_markets_info(year=2018)
+    create_markets_info(year=2020)
     create_markets_info(year=2021, mean_da=75, mean_id=60)
-    create_markets_info(year=2022, mean_da=75, mean_id=60)
     create_markets_info(year=2030, mean_da=75, mean_id=60, fb=75, fp = 80)
