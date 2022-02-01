@@ -238,7 +238,8 @@ def create_markets_info(year, mean_da=None, mean_id=None, fb=None, fp=None):
             future_peak_vals[i] = 0
 
     markets_data["future_peak"] = future_peak_vals
-
+    
+    # Write the dataframe to a csv
     # markets_data.to_csv(join(PROC_DATA_DIR, "test_{}.csv".format(year)))
     logging.info(f"Electricity market prices (DA,ID,FB,FP) for {year} created")
     return markets_data
@@ -255,6 +256,6 @@ def is_leap_year(year):
 
 
 if __name__ == '__main__':
-    create_markets_info(year=2021, mean_da=75, mean_id=60)
+    create_markets_info(year=2021)
     create_markets_info(year=2022, mean_da=75, mean_id=60)
     create_markets_info(year=2030, mean_da=75, mean_id=60, fb=75, fp = 80)
