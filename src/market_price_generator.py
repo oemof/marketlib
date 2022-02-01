@@ -58,8 +58,7 @@ def create_price_pattern(year, market, mean_val=None):
     
     
     periods = len(dti)
-    print(dti[0])
-    print(dti[-1])
+
     df = pd.DataFrame()
     # Need some parameters of the Datetime object to search patterns
     df["Date"] = dti
@@ -116,11 +115,11 @@ def create_price_pattern(year, market, mean_val=None):
     
     df["price"] = price
 
-    mean_profile = df["price"].mean()
+    #mean_profile = df["price"].mean()
 
     if mean_val:
         # Override the previous one if mean value is given
-        df["price"] = df["price"] * mean_val / mean_profile
+        df["price"] = df["price"] * mean_val / 100
 
     if year not in range(2015, 2021) and mean_val is None:
         raise ValueError(
