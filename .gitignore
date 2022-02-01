@@ -65,5 +65,4 @@ local.properties
 .project
 *.pyc
 *.cpython-38.pyc
-*.xlsx
 *.txt
