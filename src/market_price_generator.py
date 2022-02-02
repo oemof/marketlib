@@ -261,13 +261,13 @@ def create_markets_info(
 
     # Write the dataframe to a csv
     if save_csv:
-        markets_data.to_csv(join(PROC_DATA_DIR, "test_{}.csv".format(year)))
+        markets_data.to_csv(join(PROC_DATA_DIR, "EnergyMarketPrice_{}.csv".format(year)))
 
     return markets_data
 
 
 if __name__ == '__main__':
-    for i in range(2020, 2021):
+    for i in range(2018, 2021):
         create_markets_info(i, save_csv=True)
-    #create_markets_info(year=2021, mean_da=75, mean_id=60)
-    #create_markets_info(year=2030, mean_da=75, mean_id=60, fb=75, fp = 80)
+    create_markets_info(year=2021, mean_da=75, mean_id=60, save_csv=True)
+    create_markets_info(year=2030, mean_da=75, mean_id=60, fb=75, fp = 80, save_csv=True)
