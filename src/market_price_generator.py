@@ -8,8 +8,6 @@ Create market price time series from historical data
 Using price pattern generated from historical data from 2015-2019
 
 '''
-
-import datetime
 import pandas as pd
 from os.path import join
 from src.common import RAW_DATA_DIR, PROC_DATA_DIR
@@ -47,25 +45,29 @@ def create_price_pattern(year, market, mean_val=None):
         raise ValueError('Parameter "market" must be one "da" or "id".')
 
     START = f"{year}-01-01 00:00:00"
-    END = f"{year}-12-31 23:00"
+
     if market == "da":
         END = f"{year}-12-31 23:00:00"
-        dti = pd.date_range(start=START, end=END, freq="H")
+        dti = pd.date_range(start=START, end=END, freq="H", tz='Europe/Berlin')
 
     if market == "id":
         END = f"{year}-12-31 23:45:00"
-        dti = pd.date_range(start=START, end=END,freq="15T")
-    
-    
+        dti = pd.date_range(
+            start=START,
+            end=END,
+            freq="15T",
+            tz='Europe/Berlin')
+
     periods = len(dti)
 
     df = pd.DataFrame()
+    
     # Need some parameters of the Datetime object to search patterns
     df["Date"] = dti
     df["Month"] = dti.month
     df["DayOfWeek"] = dti.dayofweek
 
-    # EXCEL READER
+    # Excel reader
     if market == "da":
         EXCEL_DATA = join(RAW_DATA_DIR, "day_ahead_price_profile.xlsx")
     elif market == "id":
@@ -86,7 +88,7 @@ def create_price_pattern(year, market, mean_val=None):
     price = []
     i = 0
 
-    # Loop
+    # Loop for the different time stamps
     while i < periods:
         month = df.at[i, "Month"]
 
@@ -106,30 +108,31 @@ def create_price_pattern(year, market, mean_val=None):
         for v in partial_data[cols[0]]:
             price.append(v)
 
-        # Since daily profiles are alreade in order just go to next day
+        # Since daily profiles are already in order just go to next day
 
         if market == "da":
             i += 24
         elif market == "id":
             i += 24 * 4
-    
+
+    # Copy the price info to the dataframe
     df["price"] = price
 
-    #mean_profile = df["price"].mean()
 
     if mean_val:
         # Override the previous one if mean value is given
+        # The values of the profiles in the excel data are normalized to 100
         df["price"] = df["price"] * mean_val / 100
 
     if year not in range(2015, 2021) and mean_val is None:
         raise ValueError(
-            "For years outside of 2015-2020 a mean value is required. I.e.: mean_val=40")
+            "For years outside of 2015-2020 a mean value is required. I.e.: 'mean_val=40'")
 
-    # Take only the necesary columns
+    # Take only the necessary columns
     res = df[["Date", "price"]]
-
+    
+    # Reformat Dataframe to avoid conflicts with other markets
     new_column_name = f"{market}_price"
-
     res.rename(columns={"price": new_column_name}, inplace=True)
     res.set_index("Date", inplace=True)
 
@@ -139,15 +142,21 @@ def create_price_pattern(year, market, mean_val=None):
     return res
 
 
-def create_markets_info(year, mean_da=None, mean_id=None, fb=None, fp=None):
+def create_markets_info(
+        year,
+        mean_da=None,
+        mean_id=None,
+        fb=None,
+        fp=None,
+        save_csv=False):
     '''
     Creates a dataframe with information on the IntraDay, Day Ahead, Future Base, and Future Peak
     markets
-    
-    For years 2015-2017: Uses artificial DA and ID profiles, and FB and FP market data
-    For years 2018-2021: Uses artificial data for DA, ID profiles, and FB and FP market data
-    For years 2021-2025:  Uses artificial DA and ID profiles, and FB and FP market data
-    For years 2025-:  Uses artificial data for DA, ID, FB, and FP
+
+    For years 2015-2017: Uses DA and ID market data, FP and FB must be given
+    For years 2018-2020: Uses DA, ID, FP, and FB market data. None must be given
+    For years 2021-2025: Uses FB and FP market data. DA and ID must be given
+    For years 2025-: DA, ID, FP and FP market data must be giiven
 
     :param year: Year for data
     :param mean_da: Mean Day Ahead price. Required for years 2022 an onwards
@@ -176,38 +185,24 @@ def create_markets_info(year, mean_da=None, mean_id=None, fb=None, fp=None):
             'Future Peak price "fp=" must be given for years not in 2018-2025')
 
     # Get DA and ID info
-    
-    if year in range(2015,2021):
-        DA_ID_MARKET_PARAMETER= join(RAW_DATA_DIR,"market_parameter.xlsx")
+    if year in range(2015, 2021):
+        DA_ID_MARKET_PARAMETER = join(RAW_DATA_DIR, "market_parameter.xlsx")
         da_id_data = pd.read_excel(DA_ID_MARKET_PARAMETER, "MarketParams",
                                    index_col="year",
                                    engine='openpyxl'
                                    )
-        mean_da=da_id_data.at[year,"dayahead"]
-        mean_id= da_id_data.at[year,"intraday"]
-    
-  
-    if year < 2021:
-        EXCEL_DATA = join(RAW_DATA_DIR, "market_parameter.xlsx")
-        data = pd.read_excel(
-        EXCEL_DATA,
-        "MarketParams",
-        engine='openpyxl',
-        parse_dates=False, index_col="year")
-        
-        mean_da=data.at[year,"dayahead"]
-        mean_id=data.at[year,"intraday"]
-        
+
+        mean_da = da_id_data.at[year, "dayahead"]
+        mean_id = da_id_data.at[year, "intraday"]
+
     day_ahead = create_price_pattern(
         year=year, market="da", mean_val=mean_da)
     day_ahead = day_ahead.resample("15min").pad()
     intra_day = create_price_pattern(
         year=year, market="id", mean_val=mean_id)
     markets_data = pd.concat([day_ahead, intra_day], axis=1)
-    
+
     # Need to copy the last 3 values to fill the table for Day Ahead
-        
-        # Need to copy the last 3 values to fill the table for Day Ahead
     for i in range(1, 4):
         markets_data["da_price"][-i] = markets_data["da_price"][-4]
 
@@ -245,28 +240,34 @@ def create_markets_info(year, mean_da=None, mean_id=None, fb=None, fp=None):
             future_peak_vals[i] = 0
 
     markets_data["future_peak"] = future_peak_vals
-  
-    # Write the dataframe to a csv
 
-    markets_data.to_csv(join(PROC_DATA_DIR, "test_{}.csv".format(year)))
+    time_stamps = markets_data.index.tolist()
+    utc_offset = [t.tz._utcoffset for t in time_stamps]
+
+    # check those where the offset is different from the 01-Jan 00:00:00
+    diff = [False if utc == utc_offset[0] else True for utc in utc_offset]
+
+    # now a quick solution is to move the prices 1 hour up for the times with
+    # utc +2
+    da_utc = [markets_data["da_price"][i] if diff[i] ==
+              False else markets_data["da_price"][i + 4] for i in range(0, len(diff))]
+    id_utc = [markets_data["id_price"][i] if diff[i] ==
+              False else markets_data["id_price"][i + 4] for i in range(0, len(diff))]
+
+    markets_data["da_price"] = da_utc
+    markets_data["id_price"] = id_utc
+
     logging.info(f"Electricity market prices (DA,ID,FB,FP) for {year} created")
+
+    # Write the dataframe to a csv
+    if save_csv:
+        markets_data.to_csv(join(PROC_DATA_DIR, "test_{}.csv".format(year)))
+
     return markets_data
 
 
-def is_leap_year(year):
-    """
-    Determine whether a year is a leap year.
-
-    :param year: Year (int)
-    """
-
-    return year % 4 == 0 and (year % 100 != 0 or year % 400 == 0)
-
-
 if __name__ == '__main__':
-    create_markets_info(year=2018)
-    create_markets_info(year=2020)
-    for i in range(2018,2021):
-        create_markets_info(i)
-    create_markets_info(year=2021, mean_da=75, mean_id=60)
-    create_markets_info(year=2030, mean_da=75, mean_id=60, fb=75, fp = 80)
+    for i in range(2020, 2021):
+        create_markets_info(i, save_csv=True)
+    #create_markets_info(year=2021, mean_da=75, mean_id=60)
+    #create_markets_info(year=2030, mean_da=75, mean_id=60, fb=75, fp = 80)
