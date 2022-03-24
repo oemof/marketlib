@@ -1,3 +1,5 @@
+.. image:: https://zenodo.org/badge/447935349.svg
+   :target: https://zenodo.org/badge/latestdoi/447935349
 
 ===========
 Electricity Markets Lib
@@ -49,13 +51,12 @@ If you have a working Python3 environment, use pypi to install the latest oemof 
 Currently an installation through pip + git is required.
 ::
 
-%	pip install git+https://github.com/Fernando3161/EnergyMarketsSimulation.git
-
+	pip install git+https://github.com/oemof/marketlib.git
 
 After publishing an installation through pip shall be possible
 ::
 
-%    pip install electricity_markets
+    pip install oemof.marketlib
     
 Repository Structure Structure
 ===========
@@ -100,7 +101,7 @@ For future years there are necessary and optional parameter:
 For years 2015-2017: Uses DA and ID market data, FP and FB must be given.
 For years 2018-2020: Uses DA, ID, FP, and FB market data. None must be given.
 For years 2021-2025: Uses FB and FP market data. DA and ID must be given.
-For years 2025-: DA, ID, FP and FP market data must be given.
+For years 2025+: DA, ID, FP and FP market data must be given.
 
 The methodology implemented in this library is described in `this <https://doi.org/10.1002/ceat.202100062>`_ scientific paper:
 Support Information can be found `here <https://onlinelibrary.wiley.com/action/downloadSupplement?doi=10.1002%2Fceat.202100062&file=ceat202100062-sup-0001-misc_information.pdf>`_.
@@ -182,7 +183,8 @@ You can approach us via the issues and comment section.
 
 Citing
 ======
-
+For citing this repository, you might want to refer to 
+`DOI:10.5281/zenodo.6382469 <https://doi.org/10.5281/zenodo.6382469>`_.
 For citing the Price Pattern Methodology, you might want to refer to
 `DOI:10.1002/ceat.202100062 <https://doi.org/10.1016/j.simpa.2020.100028>`_,
 which gives an overview over the European electricity exchanges and the modelling of markets.
