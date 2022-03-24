@@ -1,0 +1,19 @@
+# YAML 1.2
+---
+cff-version: "0.0.1"
+license: MIT
+message: "If you use this software, please cite it using these metadata."
+title: "oemof.marketlib"
+abstract: "The oemof.marketlib package is part of the Open energy modelling framework (oemof). Oemof.marketlib provides energy models with markets as sinks and/or sources with underlaying data."
+authors:
+  -
+    family-names: Fernando Andres
+    given-names: Penaherrera Vaca
+-
+    family-names: Steffen
+    given-names: Wehkamp
+
+version: v.0.0.1
+date-released: 2022-03-24
+
+
