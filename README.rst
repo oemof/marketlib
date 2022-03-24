@@ -49,13 +49,13 @@ If you have a working Python3 environment, use pypi to install the latest oemof 
 Currently an installation through pip + git is required.
 ::
 
-	pip install git+https://github.com/Fernando3161/EnergyMarketsSimulation.git
+%	pip install git+https://github.com/Fernando3161/EnergyMarketsSimulation.git
 
 
 After publishing an installation through pip shall be possible
 ::
 
-    pip install electricity_markets
+%    pip install electricity_markets
     
 Repository Structure Structure
 ===========
