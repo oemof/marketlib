@@ -9,11 +9,15 @@ authors:
   -
     family-names: Fernando Andres
     given-names: Penaherrera Vaca
--
+    orcid: "https://orcid.org/0000-0003-3726-0028"
+  -
     family-names: Steffen
     given-names: Wehkamp
+    orcid: "https://orcid.org/0000-0001-6397-4062"
 
 version: v.0.0.1
 date-released: 2022-03-24
+doi: 10.5281/zenodo.6382469
+url: "https://github.com/oemof/marketlib"
 
 
